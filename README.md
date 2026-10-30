@@ -73,13 +73,13 @@ src/lib/collect.test.ts   unit tests for the pure layer
 Discovered from the global config directory:
 
 ```
-~/.config/opencode/plugins/subagent-model/
+~/.config/opencode/plugins/opencode-subagent-model/
 ```
 
 A project-local copy works the same way:
 
 ```
-<project>/.opencode/plugins/subagent-model/
+<project>/.opencode/plugins/opencode-subagent-model/
 ```
 
 After adding the directory, reload the TUI (`/reload`) or restart it.

@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin"
 
 export default Plugin.define({
-  id: "subagent-model",
+  id: "opencode-subagent-model",
   setup() {},
 })

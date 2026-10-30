@@ -150,10 +150,10 @@ async function showDetails(context: Context, sessionID: string | undefined, quer
 }
 
 export default Plugin.define({
-  id: "subagent-model.tui",
+  id: "opencode-subagent-model.tui",
   setup(context) {
     const options = readOptions(context)
-    const [settings, updateSettings] = context.storage.store("settings", {
+    const [settings, updateSettings] = context.storage.store("opencode-subagent-model", {
       initial: { compact: false },
     })
     const compact = () => options.compact ?? settings.compact
@@ -170,7 +170,7 @@ export default Plugin.define({
       mode: "global",
       commands: [
         {
-          id: "subagent-model.show",
+          id: "opencode-subagent-model.show",
           title: "Show running subagent models",
           group: "Subagents",
           bind: options.bind,
@@ -180,7 +180,7 @@ export default Plugin.define({
           run: (input) => showDetails(context, currentSessionID(context), input),
         },
         {
-          id: "subagent-model.toggleCompact",
+          id: "opencode-subagent-model.toggleCompact",
           title: "Toggle compact subagent status",
           group: "Subagents",
           palette: true,
