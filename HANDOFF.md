@@ -43,15 +43,38 @@ User-facing names deliberately unchanged: slash `/subagents`, alias
 ### Installed plugin
 
 ```
-~/.config/opencode/plugins/opencode-subagent-model/
-  package.json -> /mnt/d/Ai/opencode/opencode-subagent-model/package.json
-  src          -> /mnt/d/Ai/opencode/opencode-subagent-model/src
+~/.config/opencode/plugins/opencode-subagent-model -> /mnt/d/Ai/opencode/opencode-subagent-model
 ```
 
-The old `src` symlink pointed at `/mnt/d/Ai/opencode/plugin-custom/src`, which
-no longer existed, so no version of this plugin was loading. The stale
-`src.bak-1793262514` copy moved to
-`/tmp/opencode/subagent-model-src.bak-1793262514`.
+The plugin directory is a symlink to this repo. Verified through the API:
+
+```json
+{"id": "opencode-subagent-model", "features": {"server": true, "tui": true}, "state": {"status": "active"}}
+```
+
+Discovery does **not** follow file symlinks inside a plugin directory. A dir
+containing a symlinked `package.json` or `src` is skipped silently, with no log
+line and no error state. A symlinked directory itself is followed. Tested all
+three shapes through `GET /api/plugin`:
+
+| Installed shape | Discovered |
+|---|---|
+| real `package.json` + real `src/` | yes |
+| `package.json` and `src` as symlinks | no |
+| whole dir as a symlink | yes |
+
+That silent skip is what made the first two attempts fail: the plugin never
+reached the server, so no TUI part existed and `/reload` showed an error. The
+old `src -> /mnt/d/Ai/opencode/plugin-custom/src` link had the same defect.
+
+### Diagnosing plugin load
+
+```sh
+opencode api get "/api/plugin?location%5Bdirectory%5D=/abs/path/to/project"
+```
+
+Prints every plugin with `source`, `features`, and `state`. Absent from this
+list means not discovered at all.
 
 ## Pending
 

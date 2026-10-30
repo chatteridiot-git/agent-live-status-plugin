@@ -82,6 +82,16 @@ A project-local copy works the same way:
 <project>/.opencode/plugins/opencode-subagent-model/
 ```
 
+The plugin directory may be a symlink to the checkout:
+
+```sh
+ln -s /path/to/opencode-subagent-model ~/.config/opencode/plugins/opencode-subagent-model
+```
+
+Do not symlink files *inside* the plugin directory. Discovery ignores a
+directory whose `package.json` or `src` is a symlink. Only a symlinked
+directory works.
+
 After adding the directory, reload the TUI (`/reload`) or restart it.
 
 ## Develop
