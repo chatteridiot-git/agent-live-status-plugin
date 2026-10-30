@@ -7,7 +7,7 @@ live TUI.
 
 ```sh
 npx tsc --noEmit   # clean
-npm test           # 13 pass, 0 fail
+npm test           # 14 pass, 0 fail
 ```
 
 ## Done
@@ -17,10 +17,13 @@ npm test           # 13 pass, 0 fail
 - `src/lib/collect.ts` — pure data layer with narrow interfaces: `collect`,
   `resolveModel`, `labeler`, `summary`, `elapsed`, `truncate`, `cleanTitle`,
   `filterRows`.
-- `src/lib/collect.test.ts` — 13 `node:test` cases, no new dependencies.
+- `src/lib/collect.test.ts` — 14 `node:test` cases, no new dependencies.
 - `src/tui.tsx` — slot, event subscriptions, filterable `dialog.select` with an
   "Open session" action, compact toggle persisted via `storage.store`,
   `placement` / `bind` / `compact` options, muted elapsed time.
+- `dialog.select` now passes an explicit `search` callback (`matches` in
+  `collect.ts`). Filtering is no longer assumed to be a host default: typing
+  matches option title, description, and session ID.
 - Fixed `resolveModel` reading `context.location` instead of the resolved
   location; ancestor walk is cycle-safe via a `Set` guard.
 - `LICENSE`, README options table, `typecheck` / `test` scripts, version 0.2.0.
@@ -83,7 +86,8 @@ list means not discovered at all.
 `/reload`, then check:
 
 - sidebar item appears, one line, colored label plus muted elapsed time
-- `/subagents` lists running subagents and filters while typing
+- `/subagents` lists running subagents and filters while typing (filter is now
+  explicit; confirm the host still shows the query field)
 - `ctrl+o` opens the selected subagent session
 - `Toggle compact subagent status` persists across a TUI restart
 - `placement` / `bind` options take effect

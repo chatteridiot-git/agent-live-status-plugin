@@ -187,11 +187,14 @@ export function truncate(value: string, width: number): string {
   return `${value.slice(0, width - 1)}…`
 }
 
+/** Case-insensitive substring match across `fields`. An empty query always matches. */
+export function matches(query: string | undefined, ...fields: string[]): boolean {
+  const needle = query?.trim().toLowerCase()
+  if (!needle) return true
+  return fields.join(" ").toLowerCase().includes(needle)
+}
+
 /** Case-insensitive match on agent, model, title, and session ID. */
 export function filterRows(rows: RunningSubagent[], query: string | undefined): RunningSubagent[] {
-  const needle = query?.trim().toLowerCase()
-  if (!needle) return rows
-  return rows.filter((row) =>
-    `${row.agent} ${row.model} ${row.title} ${row.sessionID}`.toLowerCase().includes(needle),
-  )
+  return rows.filter((row) => matches(query, row.agent, row.model, row.title, row.sessionID))
 }

@@ -6,6 +6,7 @@ import {
   elapsed,
   filterRows,
   labeler,
+  matches,
   resolveModel,
   summary,
   truncate,
@@ -171,4 +172,12 @@ test("filterRows matches agent, model, and title case-insensitively", () => {
   assert.equal(filterRows(rows, "gpt")[0].sessionID, "ses_2")
   assert.equal(filterRows(rows, "tests")[0].sessionID, "ses_2")
   assert.equal(filterRows(rows, "   ").length, 2)
+})
+
+test("matches spans every field and ignores case and padding", () => {
+  assert.equal(matches("EXPLORE", "explore · DeepSeek/Flash", "Inspect repo"), true)
+  assert.equal(matches(" ses_2 ", "general · OpenAI/GPT", "Write tests", "ses_2"), true)
+  assert.equal(matches("missing", "general · OpenAI/GPT"), false)
+  assert.equal(matches(undefined, "anything"), true)
+  assert.equal(matches("", "anything"), true)
 })

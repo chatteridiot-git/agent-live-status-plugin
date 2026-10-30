@@ -6,6 +6,7 @@ import {
   collect,
   elapsed,
   filterRows,
+  matches,
   summary,
   truncate,
   type RunningSubagent,
@@ -144,6 +145,10 @@ async function showDetails(context: Context, sessionID: string | undefined, quer
         onTrigger: (value) => openSession(context, value),
       },
     ],
+    search: (value, options) =>
+      options.filter((option) =>
+        matches(value, option.title, option.description ?? "", option.footer ?? ""),
+      ),
   })
 
   if (choice) openSession(context, choice)
