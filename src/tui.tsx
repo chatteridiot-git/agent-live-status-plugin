@@ -110,7 +110,9 @@ function claim(context: Context, placement: Placement, render: (input: SlotInput
 }
 
 function openSession(context: Context, sessionID: string) {
-  if (context.ui.tabs.focus(sessionID)) return
+  const session = context.data.session.get(sessionID)
+  // Tabs only hold root sessions: focusing a child would focus its parent.
+  if (!session?.parentID && context.ui.tabs.focus(sessionID)) return
   context.ui.router.navigate({ type: "session", sessionID })
 }
 
@@ -129,7 +131,7 @@ async function showDetails(context: Context, sessionID: string | undefined, quer
   }
 
   const choice = await context.ui.dialog.select<string>({
-    title: `Subagent models (${rows.length})`,
+    title: `Subagents (${rows.length})`,
     placeholder: "Filter by agent, model, or title",
     options: rows.map((row) => ({
       title: truncate(`${row.agent} · ${row.model}`, 96),
@@ -139,10 +141,13 @@ async function showDetails(context: Context, sessionID: string | undefined, quer
     })),
     actions: [
       {
-        bind: "ctrl+o",
+        bind: "alt+o",
         title: "Open session",
         side: "right",
-        onTrigger: (value) => openSession(context, value),
+        onTrigger: (value) => {
+          openSession(context, value)
+          context.ui.dialog.clear()
+        },
       },
     ],
     search: (value, options) =>

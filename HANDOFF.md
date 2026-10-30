@@ -79,30 +79,52 @@ opencode api get "/api/plugin?location%5Bdirectory%5D=/abs/path/to/project"
 Prints every plugin with `source`, `features`, and `state`. Absent from this
 list means not discovered at all.
 
+## Verified in a live TUI (2026-10-30)
+
+Ran with real background subagents as children of the same session.
+
+- Sidebar item renders on one line: label plus muted elapsed. One row shows
+  `sub general · OpenCode Go/DeepSeek V4.1 Flash` and `4m`; two rows show
+  `sub 2 · …` with no elapsed.
+- `/reload` keeps the slot, elapsed keeps counting.
+- `/subagents`: title, one row per running child, gray description, footer
+  session ID. Typing filters (`hold` keeps the match, `zzz` empties the list);
+  the `search` callback works in this host build.
+- `Enter` opens the child transcript. `alt+o` opens it and now also closes the
+  dialog.
+- `Toggle compact subagent status` shows the right toast, collapses to `sub 1`,
+  keeps elapsed, and survives a TUI restart. Toggling back restores the full
+  label.
+- Live updates: deleting a running child removed its row without a restart, so
+  the event subscriptions do their job.
+
+Two bugs found and fixed during that run:
+
+- `ctrl+o` was bound to the host's `open.menu`, so it opened the recent-sessions
+  picker. The action is now `alt+o`.
+- `tabs.focus(childID)` focuses the child's **root** tab, so opening a subagent
+  landed back on the parent. Children now go through `router.navigate`;
+  `tabs.focus` is used only for root sessions.
+- The title `Subagent models (1)` was clipped to `models (1)` in the dialog
+  header; it is now `Subagents (1)`.
+
 ## Pending
 
-### 1. Verify in a live TUI
+### 1. Options
 
-`/reload`, then check:
-
-- sidebar item appears, one line, colored label plus muted elapsed time
-- `/subagents` lists running subagents and filters while typing (filter is now
-  explicit; confirm the host still shows the query field)
-- `ctrl+o` opens the selected subagent session
-- `Toggle compact subagent status` persists across a TUI restart
-- `placement` / `bind` options take effect
+`placement`, `bind`, and forced `compact` are untested. They need a config entry
+and a restart, and a `package` entry can hide the local directory install.
 
 ### 2. Unverified runtime behaviour
 
-- `tick` signal: whether `context.data.session.list()` and
-  `context.data.session.status()` are reactive reads. If they are, the 13 event
-  subscriptions and the counter are redundant and can be deleted. Do not delete
-  without testing: live updates depend on it today.
+- `tick` signal: live updates work, but it is still unknown whether
+  `context.data.session.list()` and `context.data.session.status()` are reactive
+  reads. If they are, the 13 event subscriptions and the counter are redundant.
+  Do not delete without testing.
 - `enabled: () => true` on the dialog command. Making it reflect row count
   risks freezing the command if the keymap layer factory does not re-run.
-- JSX layout: status item uses `<box flexDirection="row" gap={1}>` with two
-  `<text>` children because `SpanProps` has no `fg`. Confirm it renders on one
-  line in a narrow sidebar.
+- JSX layout: the two `<text>` children did not wrap at the widths tested, but a
+  deliberately narrow sidebar was not tried.
 
 ### 3. Optional
 
