@@ -1,46 +1,69 @@
 # opencode-subagent-model
 
-OpenCode v2 TUI plugin that shows which model each running subagent is using.
+Live model status for running subagents in the OpenCode TUI.
 
-If you run multiple subagents in one session, this plugin makes it easy to see what each one is doing at a glance. It adds a live status summary to the TUI and includes a searchable picker for all running subagents.
+This plugin shows which model each active subagent is using, so you can quickly understand what is running without opening each session individually.
 
-## What it does
+## Why use it
 
-- Adds a live status item in the session UI (`sidebar.content` by default)
-- Shows the model for each running subagent
-- Adds the `/subagents` slash command
-- Adds palette actions for browsing active subagents and toggling compact mode
-- Lets you jump straight to a subagent session from the picker
+- See live model information for each running subagent
+- Browse all active subagents from one searchable picker
+- Open any subagent session directly from the UI
+- Keep the status compact when you want less visual noise
 
-Example status output:
+## Example output
+
+Single subagent:
 
 ```text
 sub explore · OpenAI/GPT-4o · 42s
 ```
 
-or for multiple subagents:
+Multiple subagents:
 
 ```text
 sub 3 · explore x2, general · OpenAI/GPT-4o x2, Anthropic/Claude Sonnet 4
 ```
 
+## Features
+
+- Live status summary in the session UI (`sidebar.content` by default)
+- `/subagents` command and `/subagent-models` alias
+- Palette command: `Show running subagent models`
+- Palette command: `Toggle compact subagent status`
+- Type-to-filter picker for agent, model, title, and elapsed time
+- Direct open action for each subagent session
+
+## How it works
+
+The plugin inspects the active session family and shows child sessions that are currently marked as `running`.
+
+It resolves the model in this order:
+
+1. the session model
+2. the subagent's configured agent model
+3. the nearest parent session model
+4. `unknown model`
+
+The displayed label follows the format `ProviderName/ModelName`, and appends ` (variant)` when relevant. If a label is missing, the plugin falls back to the provider or model ID.
+
 ## Commands
 
 ### `/subagents`
 
-Opens a searchable list of all running subagents in the current session family.
+Opens a searchable list of running subagents.
 
-The picker includes:
+It includes:
 
 - agent name
-- model
+- resolved model
 - session title
 - elapsed time
 - session ID
 
-Type to filter, press Enter to open the selected session, or use `alt+o` to open it without closing the picker.
+Type to filter the list. Press Enter to open the selected session, or use `alt+o` to open it without closing the picker.
 
-You can pre-filter the list with a slash argument:
+Example:
 
 ```text
 /subagents explore
@@ -74,7 +97,7 @@ Add the plugin in `opencode.jsonc`:
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Where the status item renders |
+| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Where the live status is rendered |
 | `bind` | `string` | unset | Keybind for the subagent picker |
 | `compact` | `boolean` | unset | Forces compact mode (`sub N`) |
 
@@ -94,24 +117,13 @@ Project-local path:
 <project>/.opencode/plugins/opencode-subagent-model/
 ```
 
-You can also symlink it into place:
+You can also symlink the plugin directory into place:
 
 ```sh
 ln -s /path/to/opencode-subagent-model ~/.config/opencode/plugins/opencode-subagent-model
 ```
 
-After installing it, reload the TUI with `/reload` or restart OpenCode.
-
-## Model resolution
-
-The plugin resolves the best model using this priority:
-
-1. the session model
-2. the subagent's configured agent model
-3. the nearest parent session model
-4. `unknown model`
-
-The final label is formatted as `ProviderName/ModelName`, with ` (variant)` added when relevant.
+After installation, reload the TUI with `/reload` or restart OpenCode.
 
 ## Development
 
