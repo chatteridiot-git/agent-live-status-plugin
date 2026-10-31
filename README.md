@@ -4,6 +4,10 @@ Live model status for running subagents in the OpenCode TUI.
 
 This plugin shows which model each active subagent is using, so you can quickly understand what is running without opening each session individually.
 
+## Live preview
+
+![OpenCode plugin showing live subagent model status](./opencode.png)
+
 ## Why use it
 
 - See live model information for each running subagent
