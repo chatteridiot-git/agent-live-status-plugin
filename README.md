@@ -1,39 +1,82 @@
 # opencode-subagent-model
 
-OpenCode v2 TUI plugin. Shows the model that each running subagent uses.
+Live model status for running subagents in the OpenCode TUI.
 
-## What it does
+This plugin shows which model each active subagent is using, so you can quickly understand what is running without opening each session individually.
 
-- Adds a live status item to the session sidebar (`sidebar.content`), so it shows
-  in the right area instead of under the prompt box:
-  - one subagent: `sub explore · DeepSeek/DeepSeek Flash (high) · 42s`
-  - several subagents: `sub 3 · explore x2, general · DeepSeek/DeepSeek Flash (high) x2, OpenAI/GPT`
-- Adds `/subagents` (alias `/subagent-models`) and the palette command
-  **Show running subagent models**. The picker lists every running subagent with
-  its agent, model, session title, and elapsed time. Type to filter. Enter opens
-  the subagent session; `ctrl+o` opens it without closing the picker.
-  A slash argument pre-filters: `/subagents explore`.
-- Adds the palette command **Toggle compact subagent status**, which switches the
-  status item to `sub 3`. The choice is persisted with `storage.store`.
+## Why use it
 
-Model label is always `ProviderName/ModelName`, plus ` (variant)` when the model
-uses a variant. Provider name falls back to the provider ID, model name to the
-model ID.
+- See live model information for each running subagent
+- Browse all active subagents from one searchable picker
+- Open any subagent session directly from the UI
+- Keep the status compact when you want less visual noise
 
-Subagents are child sessions (`parentID` set) in the same session family as the
-session you are viewing. A session counts as running when the TUI reports its
-status as `running`.
+## Example output
 
-Model resolution order:
+Single subagent:
 
-1. Session model (`SessionInfo.model`)
-2. Subagent's configured agent model (`AgentInfo.model`)
-3. Nearest parent session model (cycle-safe ancestor walk)
+```text
+sub explore · OpenAI/GPT-4o · 42s
+```
+
+Multiple subagents:
+
+```text
+sub 3 · explore x2, general · OpenAI/GPT-4o x2, Anthropic/Claude Sonnet 4
+```
+
+## Features
+
+- Live status summary in the session UI (`sidebar.content` by default)
+- `/subagents` command and `/subagent-models` alias
+- Palette command: `Show running subagent models`
+- Palette command: `Toggle compact subagent status`
+- Type-to-filter picker for agent, model, title, and elapsed time
+- Direct open action for each subagent session
+
+## How it works
+
+The plugin inspects the active session family and shows child sessions that are currently marked as `running`.
+
+It resolves the model in this order:
+
+1. the session model
+2. the subagent's configured agent model
+3. the nearest parent session model
 4. `unknown model`
 
-## Options
+The displayed label follows the format `ProviderName/ModelName`, and appends ` (variant)` when relevant. If a label is missing, the plugin falls back to the provider or model ID.
 
-Pass options through the `plugins` entry in `opencode.jsonc`:
+## Commands
+
+### `/subagents`
+
+Opens a searchable list of running subagents.
+
+It includes:
+
+- agent name
+- resolved model
+- session title
+- elapsed time
+- session ID
+
+Type to filter the list. Press Enter to open the selected session, or use `alt+o` to open it without closing the picker.
+
+Example:
+
+```text
+/subagents explore
+```
+
+### Palette commands
+
+- `Show running subagent models`
+- `Toggle compact subagent status`
+
+## Configuration
+
+Add the plugin in `opencode.jsonc`:
 
 ```jsonc
 {
@@ -50,54 +93,56 @@ Pass options through the `plugins` entry in `opencode.jsonc`:
 }
 ```
 
+### Options
+
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Where the status item renders |
-| `bind` | `string` | unset | Keybind for the dialog command |
-| `compact` | `boolean` | unset | Forces `sub N`; unset keeps the toggle command available |
+| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Where the live status is rendered |
+| `bind` | `string` | unset | Keybind for the subagent picker |
+| `compact` | `boolean` | unset | Forces compact mode (`sub N`) |
 
-## Layout
+## Installation
 
-```
-package.json              exports "." (server) and "./tui"
-src/index.ts              no-op server part so the package loads through opencode.json
-src/tui.tsx               TUI part: slot, event subscriptions, commands, dialogs
-src/lib/collect.ts        pure data layer: collect, resolveModel, summary, formatting
-src/lib/collect.test.ts   unit tests for the pure layer
-```
+The plugin is discovered from the OpenCode plugin directories.
 
-`src/lib/collect.ts` imports no TUI SDK, so it runs under plain Node.
+Global config path:
 
-## Load
-
-Discovered from the global config directory:
-
-```
+```text
 ~/.config/opencode/plugins/opencode-subagent-model/
 ```
 
-A project-local copy works the same way:
+Project-local path:
 
-```
+```text
 <project>/.opencode/plugins/opencode-subagent-model/
 ```
 
-The plugin directory may be a symlink to the checkout:
+You can also symlink the plugin directory into place:
 
 ```sh
 ln -s /path/to/opencode-subagent-model ~/.config/opencode/plugins/opencode-subagent-model
 ```
 
-Do not symlink files *inside* the plugin directory. Discovery ignores a
-directory whose `package.json` or `src` is a symlink. Only a symlinked
-directory works.
+After installation, reload the TUI with `/reload` or restart OpenCode.
 
-After adding the directory, reload the TUI (`/reload`) or restart it.
-
-## Develop
+## Development
 
 ```sh
 npm install
 npm run typecheck
 npm test
 ```
+
+## Repository layout
+
+```text
+package.json             package metadata and exports
+src/index.ts             plugin bootstrap entry
+src/tui.tsx              TUI commands, slots, and dialogs
+src/lib/collect.ts       model resolution and summary logic
+src/lib/collect.test.ts  unit tests for the data layer
+```
+
+## License
+
+MIT
