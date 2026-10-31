@@ -6,7 +6,7 @@ This plugin shows which model each active subagent is using, so you can quickly 
 
 ## Live preview
 
-![OpenCode plugin showing live subagent model status](./opencode.png)
+<img src="./opencode.png" alt="OpenCode plugin showing live subagent model status" width="800" />
 
 ## Why use it
 
