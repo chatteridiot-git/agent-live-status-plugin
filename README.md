@@ -1,115 +1,65 @@
 # opencode-subagent-model
 
-OpenCode TUI plugin that surfaces the model currently used by running subagents in the active session family.
+OpenCode TUI plugin that shows which model each running subagent is using.
 
-This package has a minimal server entry point and a TUI entry point:
+This plugin watches the active session family and surfaces a live summary of child sessions that are currently running. It is designed for OpenCode v2 and shows model information directly in the TUI without changing your normal session flow.
 
-- `src/index.ts`: plugin bootstrap; currently a no-op server definition used for discovery/loading.
-- `src/tui.tsx`: runtime UI registration, slot rendering, command registration, and event subscriptions.
-- `src/lib/collect.ts`: pure data layer that aggregates session metadata, resolves model names, and formats summaries.
+## What it adds
 
-The plugin id is `opencode-subagent-model` and the TUI plugin id is `opencode-subagent-model.tui`.
-
-## Scope and behavior
-
-The plugin scans the session graph for child sessions (`parentID` is set) that belong to the same session family as the currently displayed session. It then filters to sessions whose TUI status is reported as `running` and displays a summary in the UI.
-
-The status summary is rendered as either:
-
-- a full summary, e.g. `sub explore · DeepSeek/DeepSeek Flash (high) · 42s`
-- a compact summary, e.g. `sub 3`
-
-The compact summary is controlled by a persisted setting under `context.storage.store("opencode-subagent-model")`.
-
-The plugin registers:
-
-- a live status slot in the TUI (`sidebar.content` by default)
+- a live status summary in the session UI (`sidebar.content` by default)
 - a slash command: `/subagents` (alias `/subagent-models`)
 - a palette command: `Show running subagent models`
 - a palette command: `Toggle compact subagent status`
 
-## Technical details
+Examples of the status line:
 
-### Model resolution
+- one subagent: `sub explore · OpenAI/GPT-4o · 42s`
+- several subagents: `sub 3 · explore x2, general · OpenAI/GPT-4o x2, Anthropic/Claude Sonnet 4`
 
-The resolved model is computed in `src/lib/collect.ts` using this priority order:
+## How it works
 
-1. `SessionInfo.model`
+The plugin looks at child sessions in the same session family as the session you are viewing. It only includes sessions that are reported by the TUI as `running`.
+
+For each running subagent, it resolves the best available model using this order:
+
+1. the session's model (`SessionInfo.model`)
 2. the subagent's configured agent model (`AgentInfo.model`)
 3. the nearest parent session model, walking ancestors safely to avoid cycles
 4. `unknown model`
 
-This is intentional: the plugin prefers the most local, session-specific source of truth while preserving a fallback chain across the session family.
+The display label is normalized to `ProviderName/ModelName`, with ` (variant)` appended when the model has a variant. If the provider or model name is missing, it falls back to the provider ID or model ID.
 
-### Label formatting
-
-Label construction is normalized to:
-
-- `ProviderName/ModelName`
-- append ` (variant)` when the resolved model carries a variant
-- fall back to provider ID or model ID when the friendly names are unavailable
-
-For example:
-
-- `OpenAI/GPT-4o`
-- `Anthropic/Claude Sonnet 4 (thinking)`
-- `deepseek/deepseek-chat`
-
-### Session filtering
-
-Sessions are considered live if they are in the same family and the TUI reports them as `running`.
-
-The implementation relies on the same session metadata already exposed by the OpenCode UI runtime and does not maintain a separate background process.
-
-### Event-driven refresh
-
-The status widget subscribes to these event types to trigger recalculation:
-
-- `session.created`
-- `session.deleted`
-- `session.moved`
-- `session.forked`
-- `session.renamed`
-- `session.status`
-- `session.idle`
-- `session.agent.selected`
-- `session.model.selected`
-- `session.execution.started`
-- `session.execution.succeeded`
-- `session.execution.failed`
-- `session.execution.interrupted`
-
-This keeps the displayed summary synchronized with the current TUI state without polling.
-
-## UI commands
+## Commands
 
 ### `/subagents`
 
-The slash command accepts an optional filter string and opens a searchable list of running subagents.
+Opens a searchable picker listing each running subagent with:
 
-The picker includes:
-
-- subagent title
 - agent name
 - resolved model
+- session title
 - elapsed time
-- session ID as footer metadata
+- session ID
 
-Search behavior is text-based over the option title, description, and footer data.
+You can type to filter the list. Press Enter to open the selected session, or use `alt+o` to open it without closing the picker.
 
-Key behavior:
+A slash argument filters the list immediately, for example:
 
-- `Enter` opens the selected subagent session
-- `alt+o` opens the session without closing the picker
-- a slash argument prefilters the list, e.g. `/subagents explore`
+```text
+/subagents explore
+```
+
+### `Show running subagent models`
+
+This is the same picker as the slash command, exposed as a palette action.
 
 ### `Toggle compact subagent status`
 
-This command toggles the persisted compact flag. When enabled, the status slot renders `sub N` rather than the verbose summary. When the option is not explicitly configured, the toggle remains available to the user.
+Switches the status line between the full summary and a compact `sub N` indicator. The choice is stored in plugin storage and persists between sessions.
 
 ## Configuration
 
-The plugin reads options from the OpenCode plugin config entry:
+Add the plugin in `opencode.jsonc`:
 
 ```jsonc
 {
@@ -126,69 +76,37 @@ The plugin reads options from the OpenCode plugin config entry:
 }
 ```
 
-### Supported options
+### Options
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
-| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Slot where the status item is rendered |
-| `bind` | `string` | unset | Keybind used for the subagent dialog command |
-| `compact` | `boolean` | unset | Forces compact rendering when set; leaves the user toggle enabled when unset |
+| `placement` | `"sidebar.content"` \| `"sidebar.footer"` \| `"prompt.footer"` | `"sidebar.content"` | Where the status summary is rendered |
+| `bind` | `string` | unset | Keybind for the Subagent picker command |
+| `compact` | `boolean` | unset | Forces compact mode; leaving this unset keeps the toggle action available |
 
-The runtime implementation normalizes `placement` to the supported set and defaults to `sidebar.content` if no valid value is supplied.
+## Installation
 
-## Architecture
-
-### Entry points
-
-`package.json` declares:
-
-```json
-{
-  "exports": {
-    ".": "./src/index.ts",
-    "./tui": "./src/tui.tsx"
-  }
-}
-```
-
-This is consistent with the OpenCode plugin loading model: the package is discovered through the plugin directory, and the TUI behavior is provided by the `./tui` export.
-
-### Pure data layer
-
-`src/lib/collect.ts` intentionally imports no TUI SDK. It is designed to be Node-compatible and is structured around pure functions such as:
-
-- `collect(...)`
-- `resolveModel(...)`
-- `summary(...)`
-- `filterRows(...)`
-- `elapsed(...)`
-- `matches(...)`
-
-This separation makes it easier to test the data semantics independently from TUI rendering.
-
-## Plugin discovery and loading
-
-The plugin is discovered from the configured OpenCode plugin directories. Typical locations are:
+The plugin is discovered from the OpenCode plugin directories. The common location is:
 
 ```text
 ~/.config/opencode/plugins/opencode-subagent-model/
 ```
 
-or a project-local equivalent:
+A project-local copy also works:
 
 ```text
 <project>/.opencode/plugins/opencode-subagent-model/
 ```
 
-The plugin directory itself may be symlinked into place:
+You may symlink the plugin directory into place:
 
 ```sh
 ln -s /path/to/opencode-subagent-model ~/.config/opencode/plugins/opencode-subagent-model
 ```
 
-Do not symlink files inside the plugin directory. The loader ignores plugin directories whose `package.json` or `src` entry is itself a symlink; only the directory link is accepted.
+Important: do not symlink files inside the plugin directory. Discovery only accepts a symlinked plugin directory, not a symlinked `package.json` or `src` entry.
 
-After installation, reload the TUI with `/reload` or restart the OpenCode process.
+After installing it, reload the TUI with `/reload` or restart OpenCode.
 
 ## Development
 
@@ -198,14 +116,18 @@ npm run typecheck
 npm test
 ```
 
-The project targets Node >= 22.6.0 and uses TypeScript with the OpenCode plugin/TUI runtime dependencies.
+The project uses TypeScript and targets Node >= 22.6.0.
 
-## Tests
-
-The repository includes a unit test file for the pure model-resolution/data layer:
+## Repository layout
 
 ```text
-src/lib/collect.test.ts
+package.json             package metadata and exports
+src/index.ts             no-op server entry for plugin discovery
+src/tui.tsx              TUI registration, commands, slots, dialogs
+src/lib/collect.ts       data collection and model resolution logic
+src/lib/collect.test.ts  unit tests for the pure data layer
 ```
 
-This validates the logic used for summary generation and model resolution without requiring TUI runtime integration.
+## License
+
+MIT
