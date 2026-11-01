@@ -1,10 +1,16 @@
 # opencode-subagent-model
 
+[![npm version](https://img.shields.io/npm/v/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
+[![npm downloads](https://img.shields.io/npm/dm/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
+[![License: MIT](https://img.shields.io/github/license/chatteridiot-git/agent-live-status-plugin.svg?style=flat-square)](https://github.com/chatteridiot-git/agent-live-status-plugin/blob/main/LICENSE)
+[![Node.js >=22.6](https://img.shields.io/node/v/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
+[![GitHub stars](https://img.shields.io/github/stars/chatteridiot-git/agent-live-status-plugin.svg?style=social)](https://github.com/chatteridiot-git/agent-live-status-plugin)
+
 Live model status for running subagents in the OpenCode TUI.
 
 This plugin shows which model each active subagent is using, so you can quickly understand what is running without opening each session individually.
 
-This is helpful when you use different models for main agent & subagents and you want to make sure your subagents using the model you setup in subagent.md file.
+It is especially useful when you use different models for your main agent and subagents and want to confirm that each subagent is using the intended model from its configuration.
 
 ## Live preview
 
