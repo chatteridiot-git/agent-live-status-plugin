@@ -1,9 +1,7 @@
 # opencode-subagent-model
 
 [![npm version](https://img.shields.io/npm/v/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
-[![npm downloads](https://img.shields.io/npm/dm/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
 [![License: MIT](https://img.shields.io/github/license/chatteridiot-git/agent-live-status-plugin.svg?style=flat-square)](https://github.com/chatteridiot-git/agent-live-status-plugin/blob/main/LICENSE)
-[![Node.js >=22.6](https://img.shields.io/node/v/opencode-subagent-model.svg?style=flat-square)](https://www.npmjs.com/package/opencode-subagent-model)
 [![GitHub stars](https://img.shields.io/github/stars/chatteridiot-git/agent-live-status-plugin.svg?style=social)](https://github.com/chatteridiot-git/agent-live-status-plugin)
 
 Live model status for running subagents in the OpenCode TUI.
